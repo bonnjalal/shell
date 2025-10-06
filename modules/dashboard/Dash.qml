@@ -57,7 +57,7 @@ GridLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: calendar.implicitHeight
         focus: root.visible
-        state: root.state
+        state: calendar.state
     }
     // Rect {
     //     Layout.row: 1
