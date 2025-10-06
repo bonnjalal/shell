@@ -49,20 +49,29 @@ GridLayout {
             id: dateTime
         }
     }
-
-    Rect {
+    Calendar_Todo {
+        id: calendar
         Layout.row: 1
         Layout.column: 1
         Layout.columnSpan: 3
         Layout.fillWidth: true
         Layout.preferredHeight: calendar.implicitHeight
-
-        Calendar {
-            id: calendar
-
-            state: root.state
-        }
+        focus: root.visible
+        state: root.state
     }
+    // Rect {
+    //     Layout.row: 1
+    //     Layout.column: 1
+    //     Layout.columnSpan: 3
+    //     Layout.fillWidth: true
+    //     Layout.preferredHeight: calendar.implicitHeight
+    //
+    //     Calendar {
+    //         id: calendar
+    //
+    //         state: root.state
+    //     }
+    // }
 
     Rect {
         Layout.row: 1
