@@ -26,8 +26,8 @@ Singleton {
 
     Process {
         id: scanLanguagesProcess
-        // command: ["find", FileUtils.trimFileProtocol(Qt.resolvedUrl(Directories.config + "/quickshell/translations/").toString()), "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
-        command: ["find", FileUtils.trimFileProtocol(Qt.resolvedUrl("translations/").toString()), "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
+        command: ["find", FileUtils.trimFileProtocol(Qt.resolvedUrl(Directories.config + "/quickshell/translations/").toString()), "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
+        // command: ["find", FileUtils.trimFileProtocol(Qt.resolvedUrl("translations/").toString()), "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
         running: true
 
         stdout: SplitParser {
@@ -61,8 +61,8 @@ Singleton {
 
     FileView {
         id: translationFileView
-        // path: root.languageCode?.length > 0 ? Qt.resolvedUrl(Directories.config + "/quickshell/translations/" + root.languageCode + ".json") : ""
-        path: root.languageCode?.length > 0 ? Qt.resolvedUrl("/translations/" + root.languageCode + ".json") : ""
+        path: root.languageCode?.length > 0 ? Qt.resolvedUrl(Directories.config + "/quickshell/translations/" + root.languageCode + ".json") : ""
+        // path: root.languageCode?.length > 0 ? Qt.resolvedUrl("/translations/" + root.languageCode + ".json") : ""
 
         onLoaded: {
             var textContent = "";
