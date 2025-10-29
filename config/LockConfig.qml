@@ -5,7 +5,7 @@ JsonObject {
     property bool enableFprint: true
     property int maxFprintTries: 3
     property bool enableHowdy: true
-    property int maxHowdyTries: 3
+    // property int maxHowdyTries: 3 // for howdy to work Continually  it should not have a max tries.
     property Sizes sizes: Sizes {}
 
     component Sizes: JsonObject {

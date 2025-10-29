@@ -160,8 +160,8 @@ ColumnLayout {
                     anchors.centerIn: parent
                     animate: true
                     text: {
-                        if (root.lock.pam.howdy.tries >= Config.lock.maxHowdyTries)
-                            return "visibility_off";
+                        // if (root.lock.pam.howdy.tries >= Config.lock.maxHowdyTries)
+                        //     return "visibility_off";
                         if (root.lock.pam.fprint.tries >= Config.lock.maxFprintTries)
                             return "fingerprint_off";
 

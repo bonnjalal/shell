@@ -22,28 +22,11 @@ Scope {
     signal flashMsg
 
     function handleKey(event: KeyEvent): void {
-        if (passwd.active)
+        if (passwd.active || state === "max")
             return;
-        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-            if (buffer.length > 0) {
-                if (fprint.active)
-                    fprint.abort();
-                if (howdy.active)
-                    howdy.abort();
 
-                passwd.start();
-            } else {
-                if (howdy.available) {
-                    if (fprint.active)
-                        fprint.abort();
-                    howdy.start();
-                } else if (fprint.available) {
-                    // *** FIX: Abort howdy before starting fprint ***
-                    if (howdy.active)
-                        howdy.abort();
-                    fprint.start();
-                }
-            }
+        if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+            passwd.start();
         } else if (event.key === Qt.Key_Backspace) {
             if (event.modifiers & Qt.ControlModifier) {
                 buffer = "";
@@ -162,7 +145,7 @@ Scope {
 
             tries = 0;
             errorTries = 0;
-        // start(); // Start only when press Enter
+            start();
         }
 
         config: "howdy"
@@ -184,13 +167,15 @@ Scope {
                 }
             } else if (res === PamResult.MaxTries || res === PamResult.Failed) {
                 tries++;
-                if (tries < Config.lock.maxHowdyTries) {
-                    root.howdyState = "fail";
-                    start();
-                } else {
-                    root.howdyState = "max";
-                    abort();
-                }
+                root.howdyState = "fail";
+                start();
+                // if (tries < Config.lock.maxHowdyTries) {
+                //     root.howdyState = "fail";
+                //     start();
+                // } else {
+                //     root.howdyState = "max";
+                //     abort();
+                // }
             }
 
             root.flashMsg();
