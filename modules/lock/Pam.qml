@@ -166,12 +166,9 @@ Scope {
                     howdyErrorRetry.restart();
                 }
             } else if (res === PamResult.MaxTries || res === PamResult.Failed) {
-                // tries++;
+                tries++;
                 root.howdyState = "fail";
-                // Only restart if the screen is not dimmed
-                if (!Idle.isIdle) {
-                    start();
-                }
+                start();
                 // if (tries < Config.lock.maxHowdyTries) {
                 //     root.howdyState = "fail";
                 //     start();
@@ -200,10 +197,7 @@ Scope {
         command: ["sh", "-c", "command -v howdy"]
         onExited: code => {
             howdy.available = code === 0;
-            // howdy.checkAvail();
-            if (howdy.available) {
-                howdy.checkAvail();
-            }
+            howdy.checkAvail();
         }
     }
 
@@ -250,15 +244,6 @@ Scope {
             howdy.errorTries = 0;
         }
     }
-    // Timer for the 2-second start delay
-    Timer {
-        id: howdyStartDelay
-        interval: 2000
-        repeat: false
-        onTriggered: {
-            howdyAvailProc.running = true;
-        }
-    }
 
     Connections {
         target: root.lock
@@ -266,15 +251,12 @@ Scope {
         function onSecureChanged(): void {
             if (root.lock.secure) {
                 availProc.running = true;
-                // howdyAvailProc.running = true;
-                howdyStartDelay.start();
+                howdyAvailProc.running = true;
                 root.buffer = "";
                 root.state = "";
                 root.fprintState = "";
                 root.howdyState = "";
                 root.lockMessage = "";
-            } else {
-                howdyStartDelay.stop();
             }
         }
 
@@ -284,24 +266,6 @@ Scope {
 
             if (howdy.active)
                 howdy.abort();
-        }
-
-        function onDimmedChanged(): void {
-            if (!howdy.available)
-                return; // Do nothing if howdy isn't here
-
-            if (root.lock.dimmed) {
-                // Screen went black, stop the Howdy loop
-                if (howdy.active) {
-                    howdy.abort();
-                }
-            } else {
-                // Screen woke up, restart the Howdy loop
-                // (Only if it's not already running and screen is secure)
-                if (!howdy.active && root.lock.secure) {
-                    howdy.start();
-                }
-            }
         }
     }
 
@@ -314,30 +278,6 @@ Scope {
 
         function onEnableHowdyChanged(): void {
             howdy.checkAvail();
-        }
-    }
-
-    // --- NEW DPMS/IDLE HANDLER ---
-    // This listens to the global Idle singleton
-    Connections {
-        target: Idle
-
-        function onIsIdleChanged() {
-            if (!howdy.available)
-                return; // Do nothing if howdy isn't here
-
-            if (Idle.isIdle) {
-                // System just went to sleep. Stop the Howdy loop.
-                if (howdy.active) {
-                    howdy.abort();
-                }
-            } else {
-                // System just woke up.
-                // Restart the Howdy loop *only if* the screen is still locked.
-                if (!howdy.active && root.lock.secure) {
-                    howdy.start();
-                }
-            }
         }
     }
 }

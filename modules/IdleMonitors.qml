@@ -45,7 +45,24 @@ Scope {
             enabled: root.enabled && (modelData.enabled ?? true)
             timeout: modelData.timeout
             respectInhibitors: modelData.respectInhibitors ?? true
-            onIsIdleChanged: root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction)
+            onIsIdleChanged: {
+                root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction);
+
+                // Now, let's control Howdy based on the idle state
+                if (isIdle) {
+                    // The screen is now idle (DPMS on)
+                    // Abort the Howdy PAM context to stop the continuous loop
+                    if (lock.pam.howdy.active) {
+                        lock.pam.howdy.abort();
+                    }
+                } else {
+                    // The screen is no longer idle (e.g., mouse moved, DPMS off)
+                    // We should restart Howdy, but only if the screen is still locked.
+                    if (lock.lock.locked && lock.lock.secure) {
+                        lock.pam.howdy.checkAvail();
+                    }
+                }
+            }
         }
     }
 }
