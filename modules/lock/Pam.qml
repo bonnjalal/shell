@@ -221,116 +221,116 @@ Scope {
             root.howdyState = "";
             howdy.errorTries = 0;
         }
+    }
 
-        // NEW: Timer to delay the start of Howdy
-        Timer {
-            id: howdyStartDelayTimer
-            interval: 2000 // 2 seconds
-            repeat: false
-            onTriggered: {
-                console.log("[Pam] Howdy start delay timer triggered. Running availability check.");
-                howdyAvailProc.running = true;
-            }
+    // NEW: Timer to delay the start of Howdy
+    Timer {
+        id: howdyStartDelayTimer
+        interval: 2000 // 2 seconds
+        repeat: false
+        onTriggered: {
+            console.log("[Pam] Howdy start delay timer triggered. Running availability check.");
+            howdyAvailProc.running = true;
         }
+    }
 
-        Connections {
-            target: root.lock
-            function onSecureChanged(): void {
-                // console.log("[Pam] onSecureChanged. Secure:", root.lock.secure) // Debug log removed for brevity
-                if (root.lock.secure) {
-                    availProc.running = true;
+    Connections {
+        target: root.lock
+        function onSecureChanged(): void {
+            // console.log("[Pam] onSecureChanged. Secure:", root.lock.secure) // Debug log removed for brevity
+            if (root.lock.secure) {
+                availProc.running = true;
 
-                    // MODIFIED: Don't start Howdy immediately. Start the delay timer instead.
-                    // howdyAvailProc.running = true; // <-- Old line
-                    console.log("[Pam] Screen locked. Starting 2-second delay for Howdy.");
-                    howdyStartDelayTimer.start(); // <-- New line
+                // MODIFIED: Don't start Howdy immediately. Start the delay timer instead.
+                // howdyAvailProc.running = true; // <-- Old line
+                console.log("[Pam] Screen locked. Starting 2-second delay for Howdy.");
+                howdyStartDelayTimer.start(); // <-- New line
 
-                    root.buffer = "";
-                    root.state = "";
-                    root.fprintState = "";
-                    root.howdyState = "";
-                    root.lockMessage = "";
-                } else {
-                    // console.log("[Pam] Unlocked, resetting screenIsIdle to false.") // Debug log removed for brevity
-                    root.screenIsIdle = false;
+                root.buffer = "";
+                root.state = "";
+                root.fprintState = "";
+                root.howdyState = "";
+                root.lockMessage = "";
+            } else {
+                // console.log("[Pam] Unlocked, resetting screenIsIdle to false.") // Debug log removed for brevity
+                root.screenIsIdle = false;
 
-                    // MODIFIED: Stop the timer if we unlock before it fires
-                    howdyStartDelayTimer.stop();
-                }
-            }
-            function onUnlock(): void {
-                // console.log("[Pam] onUnlock triggered.") // Debug log removed for brevity
-
-                // MODIFIED: Stop the timer if we unlock (e.g., with password)
+                // MODIFIED: Stop the timer if we unlock before it fires
                 howdyStartDelayTimer.stop();
+            }
+        }
+        function onUnlock(): void {
+            // console.log("[Pam] onUnlock triggered.") // Debug log removed for brevity
 
-                if (fprint.active)
-                    fprint.abort();
-                if (howdy.active)
+            // MODIFIED: Stop the timer if we unlock (e.g., with password)
+            howdyStartDelayTimer.stop();
+
+            if (fprint.active)
+                fprint.abort();
+            if (howdy.active)
+                howdy.abort();
+        }
+    }
+    Connections {
+        target: Config.lock
+        function onEnableFprintChanged(): void {
+            fprint.checkAvail();
+        }
+        function onEnableHowdyChanged(): void {
+            howdy.checkAvail();
+        }
+    }
+    // NEW: Connection to self to watch for screenIsIdle changes
+    Connections {
+        target: root
+        function onScreenIsIdleChanged() {
+            console.log("--------------------------------------------------");
+            console.log("[Pam] onScreenIsIdleChanged triggered. New value:", root.screenIsIdle);
+            console.log("--------------------------------------------------");
+            if (root.screenIsIdle) {
+                // Screen just went idle. Abort Howdy.
+                // MODIFIED: Added more detailed logging
+                console.log("[Pam] Screen idle detected. Checking Howdy state. (Available:", howdy.available, "Active:", howdy.active + ")");
+                if (howdy.available && howdy.active) {
+                    console.log("[Pam] Howdy is active, aborting Howdy.");
                     howdy.abort();
-            }
-        }
-        Connections {
-            target: Config.lock
-            function onEnableFprintChanged(): void {
-                fprint.checkAvail();
-            }
-            function onEnableHowdyChanged(): void {
-                howdy.checkAvail();
-            }
-        }
-        // NEW: Connection to self to watch for screenIsIdle changes
-        Connections {
-            target: root
-            function onScreenIsIdleChanged() {
-                console.log("--------------------------------------------------");
-                console.log("[Pam] onScreenIsIdleChanged triggered. New value:", root.screenIsIdle);
-                console.log("--------------------------------------------------");
-                if (root.screenIsIdle) {
-                    // Screen just went idle. Abort Howdy.
-                    // MODIFIED: Added more detailed logging
-                    console.log("[Pam] Screen idle detected. Checking Howdy state. (Available:", howdy.available, "Active:", howdy.active + ")");
-                    if (howdy.available && howdy.active) {
-                        console.log("[Pam] Howdy is active, aborting Howdy.");
-                        howdy.abort();
-                    } else {
-                        console.log("[Pam] Howdy is available but NOT active, no need to abort.");
-                    }
                 } else {
-                    // Screen just woke up.
-                    console.log("[Pam] Screen wake detected. Checking Howdy state. (Available:", howdy.available, "Secure:", root.lock.secure, "Active:", howdy.active + ")"); // MODIFIED: Added log
-                    if (howdy.available && root.lock.secure && !howdy.active) {
-                        console.log("[Pam] Screen wake detected, starting Howdy via checkAvail.");
-                        howdy.checkAvail();
-                    } else {
-                        console.log("[Pam] Screen wake detected, but NOT starting Howdy."); // MODIFIED: Simplified log
-                    }
+                    console.log("[Pam] Howdy is available but NOT active, no need to abort.");
+                }
+            } else {
+                // Screen just woke up.
+                console.log("[Pam] Screen wake detected. Checking Howdy state. (Available:", howdy.available, "Secure:", root.lock.secure, "Active:", howdy.active + ")"); // MODIFIED: Added log
+                if (howdy.available && root.lock.secure && !howdy.active) {
+                    console.log("[Pam] Screen wake detected, starting Howdy via checkAvail.");
+                    howdy.checkAvail();
+                } else {
+                    console.log("[Pam] Screen wake detected, but NOT starting Howdy."); // MODIFIED: Simplified log
                 }
             }
         }
-        Connections {
-            target: root
-            function onScreenIsIdleChanged() {
-                // console.log("--------------------------------------------------") // Debug log removed for brevity
-                // console.log("[Pam] onScreenIsIdleChanged triggered. New value:", root.screenIsIdle) // Debug log removed for brevity
-                // console.log("--------------------------------------------------") // Debug log removed for brevity
-                if (root.screenIsIdle) {
-                    // console.log("[Pam] Screen idle detected. Checking Howdy state. (Available:", howdy.available, "Active:", howdy.active + ")") // Debug log removed for brevity
-                    if (howdy.available && howdy.active) {
-                        // console.log("[Pam] Howdy is active, aborting Howdy.") // Debug log removed for brevity
-                        howdy.abort();
-                    } else
-                    // console.log("[Pam] Howdy is available but NOT active, no need to abort.") // Debug log removed for brevity
-                    {}
-                } else {
-                    // console.log("[Pam] Screen wake detected. Checking Howdy state. (Available:", howdy.available, "Secure:", root.lock.secure, "Active:", howdy.active + ")") // Debug log removed for brevity
-                    if (howdy.available && root.lock.secure && !howdy.active) {
-                        // console.log("[Pam] Screen wake detected, starting Howdy via checkAvail.") // Debug log removed for brevity
-                        howdy.checkAvail();
-                    } else
-                    // console.log("[Pam] Screen wake detected, but NOT starting Howdy.") // Debug log removed for brevity
-                    {}
-                }
+    }
+    Connections {
+        target: root
+        function onScreenIsIdleChanged() {
+            // console.log("--------------------------------------------------") // Debug log removed for brevity
+            // console.log("[Pam] onScreenIsIdleChanged triggered. New value:", root.screenIsIdle) // Debug log removed for brevity
+            // console.log("--------------------------------------------------") // Debug log removed for brevity
+            if (root.screenIsIdle) {
+                // console.log("[Pam] Screen idle detected. Checking Howdy state. (Available:", howdy.available, "Active:", howdy.active + ")") // Debug log removed for brevity
+                if (howdy.available && howdy.active) {
+                    // console.log("[Pam] Howdy is active, aborting Howdy.") // Debug log removed for brevity
+                    howdy.abort();
+                } else
+                // console.log("[Pam] Howdy is available but NOT active, no need to abort.") // Debug log removed for brevity
+                {}
+            } else {
+                // console.log("[Pam] Screen wake detected. Checking Howdy state. (Available:", howdy.available, "Secure:", root.lock.secure, "Active:", howdy.active + ")") // Debug log removed for brevity
+                if (howdy.available && root.lock.secure && !howdy.active) {
+                    // console.log("[Pam] Screen wake detected, starting Howdy via checkAvail.") // Debug log removed for brevity
+                    howdy.checkAvail();
+                } else
+                // console.log("[Pam] Screen wake detected, but NOT starting Howdy.") // Debug log removed for brevity
+                {}
             }
         }
     }
