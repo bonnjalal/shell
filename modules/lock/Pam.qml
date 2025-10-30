@@ -44,7 +44,7 @@ Scope {
 
     PamContext {
         id: passwd
-        // ... (no changes to passwd) ...
+
         config: "passwd"
         configDirectory: Quickshell.shellDir + "/assets/pam.d"
 
@@ -81,7 +81,7 @@ Scope {
 
     PamContext {
         id: fprint
-        // ... (no changes to fprint) ...
+
         property bool available
         property int tries
         property int errorTries
@@ -141,7 +141,9 @@ Scope {
         property int errorTries
 
         function checkAvail(): void {
+            console.log("[Howdy] checkAvail called.")
             if (!available || !Config.lock.enableHowdy || !root.lock.secure) {
+                console.log("[Howdy] checkAvail: Aborting (available=" + available + ", enabled=" + Config.lock.enableHowdy + ", secure=" + root.lock.secure + ")")
                 abort();
                 return;
             }
@@ -151,11 +153,11 @@ Scope {
 
             // MODIFIED: Do not start Howdy if the screen is idle
             if (root.screenIsIdle) {
-                // console.log("Screen is idle, not starting Howdy.")
+                console.log("[Howdy] checkAvail: Screen is IDLE, not starting Howdy.")
                 return;
             }
-
-            // console.log("Screen is active, starting Howdy.")
+            
+            console.log("[Howdy] checkAvail: Screen is ACTIVE, starting Howdy.")
             start();
         }
 
@@ -163,13 +165,17 @@ Scope {
         configDirectory: Quickshell.shellDir + "/assets/pam.d"
 
         onCompleted: res => {
+            console.log("[Howdy] onCompleted. Result:", res)
             if (!available)
                 return;
 
-            if (res === PamResult.Success)
+            if (res === PamResult.Success) {
+                console.log("[Howdy] onCompleted: Success.")
                 return root.lock.unlock();
+            }
 
             if (res === PamResult.Error) {
+                console.log("[Howdy] onCompleted: Error.")
                 root.howdyState = "error";
                 errorTries++;
                 if (errorTries < 5) {
@@ -177,15 +183,17 @@ Scope {
                     howdyErrorRetry.restart();
                 }
             } else if (res === PamResult.MaxTries || res === PamResult.Failed) {
+                console.log("[Howdy] onCompleted: Failed or MaxTries.")
                 tries++;
                 root.howdyState = "fail";
-
+                
                 // MODIFIED: Only restart if the screen is not idle
                 if (!root.screenIsIdle) {
+                    console.log("[Howdy] onCompleted: Screen is ACTIVE, restarting Howdy.")
                     start();
-                } else
-                // console.log("Howdy failed, not restarting as screen is idle.")
-                {}
+                } else {
+                    console.log("[Howdy] onCompleted: Screen is IDLE, NOT restarting Howdy.")
+                }
             }
 
             root.flashMsg();
@@ -194,7 +202,7 @@ Scope {
     }
     Process {
         id: availProc
-        // ... (no changes) ...
+
         command: ["sh", "-c", "fprintd-list $USER"]
         onExited: code => {
             fprint.available = code === 0;
@@ -203,9 +211,10 @@ Scope {
     }
     Process {
         id: howdyAvailProc
-        // ... (no changes) ...
+
         command: ["sh", "-c", "command -v howdy"]
         onExited: code => {
+            console.log("[Howdy] howdyAvailProc exited with code:", code)
             howdy.available = code === 0;
             howdy.checkAvail();
         }
@@ -213,14 +222,14 @@ Scope {
 
     Timer {
         id: errorRetry
-        // ... (no changes) ...
+
         interval: 800
         onTriggered: fprint.start()
     }
 
     Timer {
         id: stateReset
-        // ... (no changes) ...
+
         interval: 4000
         onTriggered: {
             if (root.state !== "max")
@@ -230,7 +239,7 @@ Scope {
 
     Timer {
         id: fprintStateReset
-        // ... (no changes) ...
+
         interval: 4000
         onTriggered: {
             root.fprintState = "";
@@ -238,16 +247,17 @@ Scope {
         }
     }
 
+Test-me
     Timer {
         id: howdyErrorRetry
-        // ... (no changes) ...
+
         interval: 800
         onTriggered: howdy.start()
     }
 
     Timer {
         id: howdyStateReset
-        // ... (no changes) ...
+
         interval: 4000
         onTriggered: {
             root.howdyState = "";
@@ -257,8 +267,9 @@ Scope {
 
     Connections {
         target: root.lock
-        // ... (no changes) ...
+
         function onSecureChanged(): void {
+            console.log("[Pam] onSecureChanged. Secure:", root.lock.secure)
             if (root.lock.secure) {
                 availProc.running = true;
                 howdyAvailProc.running = true; // This will call howdy.checkAvail()
@@ -269,11 +280,13 @@ Scope {
                 root.lockMessage = "";
             } else {
                 // NEW: When unlocked, reset idle state just in case
+                console.log("[Pam] Unlocked, resetting screenIsIdle to false.")
                 root.screenIsIdle = false;
             }
         }
 
         function onUnlock(): void {
+            console.log("[Pam] onUnlock triggered.")
             if (fprint.active)
                 fprint.abort();
 
@@ -284,7 +297,7 @@ Scope {
 
     Connections {
         target: Config.lock
-        // ... (no changes) ...
+
         function onEnableFprintChanged(): void {
             fprint.checkAvail();
         }
@@ -299,18 +312,23 @@ Scope {
         target: root
 
         function onScreenIsIdleChanged() {
+            console.log("--------------------------------------------------")
+            console.log("[Pam] onScreenIsIdleChanged triggered. New value:", root.screenIsIdle)
+            console.log("--------------------------------------------------")
             if (root.screenIsIdle) {
                 // Screen just went idle. Abort Howdy.
                 if (howdy.available && howdy.active) {
-                    // console.log("Screen idle detected, aborting Howdy.")
+                    console.log("[Pam] Screen idle detected, aborting Howdy.")
                     howdy.abort();
                 }
             } else {
                 // Screen just woke up.
                 // Start Howdy (checkAvail will handle all conditions)
                 if (howdy.available && root.lock.secure && !howdy.active) {
-                    // console.log("Screen wake detected, starting Howdy.")
+                    console.log("[Pam] Screen wake detected, starting Howdy via checkAvail.")
                     howdy.checkAvail();
+                } else {
+                    console.log("[Pam] Screen wake detected, but NOT starting Howdy. (Available:", howdy.available, "Secure:", root.lock.secure, "Active:", howdy.active + ")")
                 }
             }
         }

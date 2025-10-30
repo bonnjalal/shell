@@ -48,6 +48,8 @@ Scope {
 
             // MODIFIED: This is the hook
             onIsIdleChanged: {
+                console.log("[IdleMonitor] onIsIdleChanged triggered. isIdle:", isIdle);
+
                 // Run the original action
                 root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction);
 
@@ -64,12 +66,17 @@ Scope {
                 else if (Array.isArray(modelData.idleAction))
                     idleActionString = modelData.idleAction.join(" ");
 
+                console.log("[IdleMonitor] Checking idleAction string:", idleActionString);
+
                 // Check for the "dpms off" command, which is a common way
                 // to idle the screen.
                 if (idleActionString.includes("dpms off")) {
+                    console.log("[IdleMonitor] 'dpms off' string FOUND. Setting screenIsIdle to:", isIdle);
                     // This monitor controls the screen state.
                     // Tell Pam.qml about the change.
                     root.lock.pam.screenIsIdle = isIdle;
+                } else {
+                    console.log("[IdleMonitor] 'dpms off' string NOT found.");
                 }
                 // --- END NEW LOGIC ---
             }
