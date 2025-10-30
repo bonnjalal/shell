@@ -13,6 +13,9 @@ Scope {
     required property Lock lock
     readonly property bool enabled: !Config.general.idle.inhibitWhenAudio || !Players.list.some(p => p.isPlaying)
 
+    // NEW: Track if screen is active (not dimmed/DPMS off)
+    property bool screenActive: true
+
     function handleIdleAction(action: var): void {
         if (!action)
             return;
@@ -46,27 +49,12 @@ Scope {
             timeout: modelData.timeout
             respectInhibitors: modelData.respectInhibitors ?? true
             onIsIdleChanged: {
-                root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction);
-
-                if (isIdle) {
-                    // Screen is now idle (DPMS on)
-                    // Tell Pam.qml to stop looping
-                    lock.pam.isScreenActive = false;
-
-                    // Also abort the *current* scan, just in case
-                    if (lock.pam.howdy.active) {
-                        lock.pam.howdy.abort();
-                    }
-                } else {
-                    // Screen is no longer idle (e.g., mouse moved, DPMS off)
-                    // Tell Pam.qml it's allowed to loop again
-                    lock.pam.isScreenActive = true;
-
-                    // And if we're still locked, kick-start the loop
-                    if (lock.lock.locked && lock.lock.secure) {
-                        lock.pam.howdy.checkAvail();
-                    }
+                // NEW: Track screen state for DPMS/dim actions
+                if (modelData.idleAction === "dpms" || (typeof modelData.idleAction === "string" && modelData.idleAction.includes("dpms"))) {
+                    root.screenActive = !isIdle;
                 }
+
+                root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction);
             }
         }
     }

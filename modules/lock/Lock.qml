@@ -7,6 +7,7 @@ import Quickshell.Wayland
 
 Scope {
     property alias lock: lock
+    property bool screenActive: true // NEW: Expose screenActive property
 
     WlSessionLock {
         id: lock
@@ -23,6 +24,7 @@ Scope {
         id: pam
 
         lock: lock
+        screenActive: root.screenActive // NEW: Pass screen state to Pam
     }
 
     CustomShortcut {
