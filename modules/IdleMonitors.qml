@@ -32,8 +32,8 @@ Scope {
             if (Config.general.idle.lockBeforeSleep)
                 root.lock.lock.locked = true;
         }
-        onLockRequested: root.lock.lock.locked = true
-        onUnlockRequested: root.lock.lock.unlock()
+        onLockRequested: root.lock.locked = true
+        onUnlockRequested: root.lock.unlock()
     }
 
     Variants {
@@ -54,12 +54,6 @@ Scope {
                 root.handleIdleAction(isIdle ? modelData.idleAction : modelData.returnAction);
 
                 // --- NEW LOGIC ---
-                // We need to check if this *specific* monitor is the one
-                // that controls screen idling (DPMS).
-                // We'll check if its idleAction string contains "dpms off".
-                // This is the most fragile part, as it depends on user config,
-                // but it's the most direct hook.
-
                 let idleActionString = "";
                 if (typeof modelData.idleAction === "string")
                     idleActionString = modelData.idleAction;
@@ -68,19 +62,14 @@ Scope {
 
                 console.log("[IdleMonitor] Checking idleAction string:", idleActionString);
 
-                // Check for the "dpms off" command, which is a common way
-                // to idle the screen.
                 if (idleActionString.includes("dpms off")) {
                     console.log("[IdleMonitor] 'dpms off' string FOUND. Setting screenIsIdle to:", isIdle);
-                    // This monitor controls the screen state.
-                    // Tell Pam.qml about the change.
 
-                    // NEW: Added a check to log if pam is valid
                     if (root.lock.pam) {
                         console.log("[IdleMonitor] pam object is valid. Setting screenIsIdle.");
                         root.lock.pam.screenIsIdle = isIdle;
                     } else {
-                        console.error("[IdleMonitor] CRITICAL: root.lock.pam is still undefined!");
+                        console.error("[IdleMonitor] CRITICAL: root.lock.pam is still undefined! (Did you apply the fix to Lock.qml?)");
                     }
                 } else {
                     console.log("[IdleMonitor] 'dpms off' string NOT found.");
