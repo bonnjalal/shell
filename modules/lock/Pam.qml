@@ -161,6 +161,9 @@ Scope {
             if (res === PamResult.Success)
                 return root.lock.unlock();
 
+            if (!root.isScreenActive) {
+                return;
+            }
             if (res === PamResult.Error) {
                 root.howdyState = "error";
                 errorTries++;
@@ -266,6 +269,7 @@ Scope {
         }
 
         function onUnlock(): void {
+            root.isScreenActive = false;
             if (fprint.active)
                 fprint.abort();
 
