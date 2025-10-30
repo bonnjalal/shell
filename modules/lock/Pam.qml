@@ -145,7 +145,9 @@ Scope {
 
             tries = 0;
             errorTries = 0;
-            start();
+            // start();
+            if (root.isScreenActive)
+                start();
         }
 
         config: "howdy"
@@ -168,7 +170,9 @@ Scope {
             } else if (res === PamResult.MaxTries || res === PamResult.Failed) {
                 tries++;
                 root.howdyState = "fail";
-                start();
+                // start();
+                if (root.isScreenActive) { // <--- ADD THIS IF-STATEMENT
+                    start();
                 // if (tries < Config.lock.maxHowdyTries) {
                 //     root.howdyState = "fail";
                 //     start();
