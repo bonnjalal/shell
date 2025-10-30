@@ -15,13 +15,11 @@ ShellRoot {
     AreaPicker {}
     Lock {
         id: lock
-        screenActive: idleMonitors.screenActive
     }
 
     Shortcuts {}
     BatteryMonitor {}
     IdleMonitors {
-        id: idleMonitors
         lock: lock
     }
 }
