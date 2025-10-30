@@ -74,7 +74,14 @@ Scope {
                     console.log("[IdleMonitor] 'dpms off' string FOUND. Setting screenIsIdle to:", isIdle);
                     // This monitor controls the screen state.
                     // Tell Pam.qml about the change.
-                    root.lock.pam.screenIsIdle = isIdle;
+
+                    // NEW: Added a check to log if pam is valid
+                    if (root.lock.pam) {
+                        console.log("[IdleMonitor] pam object is valid. Setting screenIsIdle.");
+                        root.lock.pam.screenIsIdle = isIdle;
+                    } else {
+                        console.error("[IdleMonitor] CRITICAL: root.lock.pam is still undefined!");
+                    }
                 } else {
                     console.log("[IdleMonitor] 'dpms off' string NOT found.");
                 }
