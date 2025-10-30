@@ -171,7 +171,7 @@ Scope {
                 tries++;
                 root.howdyState = "fail";
                 // start();
-                if (root.isScreenActive) { // <--- ADD THIS IF-STATEMENT
+                if (root.isScreenActive)
                     start();
                 // if (tries < Config.lock.maxHowdyTries) {
                 //     root.howdyState = "fail";
