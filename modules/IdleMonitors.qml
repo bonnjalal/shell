@@ -51,7 +51,7 @@ Scope {
                 if (isIdle) {
                     // Screen is now idle (DPMS on)
                     // Tell Pam.qml to stop looping
-                    lock.pam.isScreenActive = true;
+                    lock.pam.isScreenActive = false;
 
                     // Also abort the *current* scan, just in case
                     if (lock.pam.howdy.active) {
@@ -60,7 +60,7 @@ Scope {
                 } else {
                     // Screen is no longer idle (e.g., mouse moved, DPMS off)
                     // Tell Pam.qml it's allowed to loop again
-                    lock.pam.isScreenActive = false;
+                    lock.pam.isScreenActive = true;
 
                     // And if we're still locked, kick-start the loop
                     if (lock.lock.locked && lock.lock.secure) {

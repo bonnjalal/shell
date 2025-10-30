@@ -18,6 +18,7 @@ Scope {
     property string fprintState
     property string howdyState
     property string buffer
+    property bool isScreenActive: true
 
     signal flashMsg
 
